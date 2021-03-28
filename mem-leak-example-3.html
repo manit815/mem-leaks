@@ -1,6 +1,7 @@
 <html>
 
 <head>
+  <title>Example 3</title>
   <style type="text/css">
     .wrapper {
       box-shadow: 0 0 5px rgba(0, 0, 0, .2);
@@ -111,6 +112,8 @@
         this.deleteButton.innerText = 'delete';
         this.deleteButton.onclick = this.destroy.bind(this);
         this.element.append(this.deleteButton);
+        this.checkbox = null;
+        this.deleteButton = null;
         return this.element;
       }
       toggle() {
