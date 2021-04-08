@@ -1,0 +1,103 @@
+/**
+ * Black theme for reveal.js.
+ *
+ * Copyright (C) 2011-2012 Hakim El Hattab, http://hakim.se
+ */
+
+
+// Default mixins and settings -----------------
+@import "../template/mixins";
+@import "../template/settings";
+// ---------------------------------------------
+
+
+// Include theme-specific fonts
+@import url(https://fonts.googleapis.com/css?family=Montserrat:700);
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,700,400italic,700italic);
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500&display=swap');
+
+
+// Override theme settings (see ../template/settings.scss)
+$backgroundColor: #111;
+
+$mainFont: 'Open Sans', sans-serif;
+$linkColor: #e7ad52;
+$linkColorHover: lighten( $linkColor, 20% );
+$headingFont: 'M PLUS Rounded 1c', 'Montserrat', Impact, sans-serif;
+$headingColor: #d69500;
+$headingTextShadow: none;
+$headingLetterSpacing: -0.03em;
+$headingTextTransform: none;
+$selectionBackgroundColor: #e7ad52;
+
+// Change text colors against light slide backgrounds
+@include light-bg-text-color(#222);
+
+
+// Theme template ------------------------------
+@import "../template/theme";
+// ---------------------------------------------
+// width: 960px; height: 700px; zoom: 1.37006;
+.reveal pre {
+  border: solid $headingColor 4px;
+  max-width: 960px;
+}
+
+.light-bg {
+  background: #1a4e66;
+}
+
+.dark-light-h {
+  background: linear-gradient(to bottom, #111 50%, #1a4e66 0%);
+}
+
+.light-dark-v {
+  background: linear-gradient(to left, #0e0e0e 50%, #1a4e66 0%);
+}
+
+.grid-wrapper {    
+  box-sizing: border-box;
+  display: grid;
+  grid-template-areas:
+    "header content"
+    "header content";
+  grid-template-columns: auto 50%;
+  grid-template-rows: 6vmin 1fr auto;
+  grid-column-gap: 10vmin;
+  height: 100%;
+  //padding: 10vmin;
+}
+
+.logo {
+   grid-area: header;
+}
+.content {
+  align-self: center;
+  grid-area: content;
+}
+.credit {
+  grid-area: credit;
+}
+
+.grey.visible {
+  fill: #999;
+}
+
+.red.visible {
+  fill: #a00;
+}
+
+.alert {
+  color: #ff7168;
+}
+
+H1.light-text {
+  color: #FFF;
+}
+
+.over-image {
+  position: relative;
+  top: -32px;
+  right: 32px;
+  vertical-align: top;
+}

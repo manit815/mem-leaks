@@ -1,0 +1,529 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+	<title>reveal.js</title>
+
+	<link rel="stylesheet" href="/dist/reset.css">
+	<link rel="stylesheet" href="/dist/reveal.css">
+	<link rel="stylesheet" href="/dist/theme/sacah.css" id="theme">
+
+	<!-- Theme used for syntax highlighted code -->
+	<link rel="stylesheet" href="/plugin/highlight/monokai.css" id="highlight-theme">
+</head>
+
+<body>
+	<div class="reveal">
+		<div class="slides">
+			<section data-state="light-dark-v">
+				<div class="grid-wrapper">
+					<div class="header">
+						<h1 class="light-text">Where did all my RAM go?</h1>
+
+						<aside class="notes">
+							Hey, occasionally you might be working on a performance issue with a web app and think, where did all my ram go? 
+							Today I want to take you through a bit about how memory is handled and the most common cause of memory leaks, referencing DOM nodes.
+						</aside>
+					</div>
+					<div class="content">
+						<img src="ChromeEatsRam.gif" />
+					</div>
+				</div>
+			</section>
+			<section data-state="dark-light-h">
+				<h2>Object linking</h2>
+				<pre class="javascript"><code data-trim data-noescape>
+						<span class="fragment" data-fragment-index="2">var foo;</span>
+						<span class="fragment" data-fragment-index="3">foo = document.querySelector('DIV');</span>
+					</code></pre>
+				<div class="light-section shadow-top">
+					<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="601px"
+						height="121px" viewBox="-0.5 -0.5 601 121">
+						<defs />
+						<g>
+							<ellipse cx="60" cy="60" rx="60" ry="60" fill="#ffffff" stroke="#000000" pointer-events="all" />
+							<g transform="translate(-0.5 -0.5)">
+								<switch>
+									<text x="60" y="67" fill="#000000" font-family="Helvetica" font-size="22px"
+										text-anchor="middle">window</text>
+								</switch>
+							</g>
+							<g class="fragment" data-fragment-index="2">
+								<path d="M 120 60 L 233.63 60" fill="none" stroke="#000000" stroke-miterlimit="20"
+									pointer-events="stroke" stroke-width="6" />
+								<path d="M 232.88 60 L 225.88 63.5 L 227.63 60 L 225.88 56.5 Z" fill="#000000" stroke="#000000"
+									stroke-miterlimit="10" pointer-events="all" stroke-width="6" />
+								<ellipse cx="300" cy="60" rx="60" ry="60" fill="#ffffff" stroke="#000000" pointer-events="all" />
+								<g transform="translate(-0.5 -0.5)">
+									<switch>
+										<text x="300" y="67" fill="#000000" font-family="Helvetica" font-size="22px"
+											text-anchor="middle">foo</text>
+									</switch>
+								</g>
+							</g>
+							<g class="fragment" data-fragment-index="3">
+								<path d="M 360 60 L 473.63 60" fill="none" stroke="#000000" stroke-miterlimit="10"
+									pointer-events="stroke" stroke-width="6" />
+								<path d="M 472.88 60 L 465.88 63.5 L 467.63 60 L 465.88 56.5 Z" fill="#000000" stroke="#000000"
+									stroke-miterlimit="10" pointer-events="all" stroke-width="6" />
+								<ellipse cx="540" cy="60" rx="60" ry="60" fill="#ffffff" stroke="#000000" pointer-events="all" />
+								<g transform="translate(-0.5 -0.5)">
+									<switch>
+										<text x="540" y="67" fill="#000000" font-family="Helvetica" font-size="22px"
+											text-anchor="middle">DIV
+											(node)</text>
+									</switch>
+								</g>
+							</g>
+						</g>
+					</svg>
+				</div>
+
+				<aside class="notes">
+					Lets start off talking about how an Object tree works, we'll start off simple, with 1 root object, the window object.
+					* Then we define a variable, foo, this is linked from the window object.
+					* Then we find a DIV node and assign it to our foo variable. Here we can see our Object tree, window, foo, DIV node.
+				</aside>
+			</section>
+			<section data-state="light-bg">
+				<h2>Mark and sweep</h2>
+				<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="576px"
+					height="441px" viewBox="-0.5 -0.5 376 241">
+					<defs />
+					<g>
+						<path d="M 55 60 L 88.63 60" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="stroke" />
+						<path d="M 93.88 60 L 86.88 63.5 L 88.63 60 L 86.88 56.5 Z" fill="#000000" stroke="#000000"
+							stroke-miterlimit="10" pointer-events="all" />
+						<ellipse cx="35" cy="60" rx="20" ry="20" fill="#ffffff" stroke="#000000" pointer-events="all" class="fragment highlight-red grey" data-fragment-index="1" />
+						<path d="M 49.14 125.86 L 96.36 78.64" fill="none" stroke="#000000" stroke-miterlimit="10"
+							pointer-events="stroke" />
+						<path d="M 100.07 74.93 L 97.59 82.36 L 96.36 78.64 L 92.64 77.41 Z" fill="#000000" stroke="#000000"
+							stroke-miterlimit="10" pointer-events="all" />
+						<path d="M 55 140 L 168.63 140" fill="none" stroke="#000000" stroke-miterlimit="10"
+							pointer-events="stroke" />
+						<path d="M 173.88 140 L 166.88 143.5 L 168.63 140 L 166.88 136.5 Z" fill="#000000" stroke="#000000"
+							stroke-miterlimit="10" pointer-events="all" />
+						<ellipse cx="35" cy="140" rx="20" ry="20" fill="#ffffff" stroke="#000000" pointer-events="all" class="fragment highlight-red grey" data-fragment-index="4" />
+						<rect x="15" y="0" width="40" height="20" fill="none" stroke="none" pointer-events="all" />
+						<g transform="translate(-0.5 -0.5)">
+								<text x="35" y="15" fill="#000000" font-family="Helvetica" font-size="17px"
+									text-anchor="middle">Roots</text>
+						</g>
+						<path d="M 135 60 L 168.63 60" fill="none" stroke="#000000" stroke-miterlimit="10"
+							pointer-events="stroke" />
+						<path d="M 173.88 60 L 166.88 63.5 L 168.63 60 L 166.88 56.5 Z" fill="#000000" stroke="#000000"
+							stroke-miterlimit="10" pointer-events="all" />
+						<ellipse cx="115" cy="60" rx="20" ry="20" fill="#ffffff" stroke="#000000" pointer-events="all" class="fragment highlight-red grey" data-fragment-index="2" />
+						<ellipse cx="115" cy="180" rx="20" ry="20" fill="#ffffff" stroke="#000000" pointer-events="all" class="fragment highlight-red red" data-fragment-index="8" />
+						<path d="M 215 140 L 255.31 117.27" fill="none" stroke="#000000" stroke-miterlimit="10"
+							pointer-events="stroke" />
+						<path d="M 259.88 114.69 L 255.51 121.18 L 255.31 117.27 L 252.07 115.08 Z" fill="#000000" stroke="#000000"
+							stroke-miterlimit="10" pointer-events="all" />
+						<ellipse cx="195" cy="140" rx="20" ry="20" fill="#ffffff" stroke="#000000" pointer-events="all" class="fragment highlight-red grey" data-fragment-index="5" />
+						<path d="M 215 220 L 248.63 220" fill="none" stroke="#000000" stroke-miterlimit="10"
+							pointer-events="stroke" />
+						<path d="M 253.88 220 L 246.88 223.5 L 248.63 220 L 246.88 216.5 Z" fill="#000000" stroke="#000000"
+							stroke-miterlimit="10" pointer-events="all" />
+						<ellipse cx="195" cy="220" rx="20" ry="20" fill="#ffffff" stroke="#000000" pointer-events="all" class="fragment highlight-red red" data-fragment-index="8" />
+						<ellipse cx="275" cy="220" rx="20" ry="20" fill="#ffffff" stroke="#000000" pointer-events="all" class="fragment highlight-red red" data-fragment-index="8" />
+						<ellipse cx="195" cy="60" rx="20" ry="20" fill="#ffffff" stroke="#000000" pointer-events="all" class="fragment highlight-red grey" data-fragment-index="3" />
+						<path d="M 289.14 114.14 L 329.45 136.87" fill="none" stroke="#000000" stroke-miterlimit="10"
+							pointer-events="stroke" />
+						<path d="M 334.03 139.45 L 326.21 139.06 L 329.45 136.87 L 329.65 132.96 Z" fill="#000000" stroke="#000000"
+							stroke-miterlimit="10" pointer-events="all" />
+						<ellipse cx="275" cy="100" rx="20" ry="20" fill="#ffffff" stroke="#000000" pointer-events="all" class="fragment highlight-red grey" data-fragment-index="6" />
+						<ellipse cx="355" cy="140" rx="20" ry="20" fill="#ffffff" stroke="#000000" pointer-events="all" class="fragment highlight-red grey" data-fragment-index="7" />
+						<ellipse cx="35" cy="100" rx="35" ry="75" fill="transparent" stroke="#000000" stroke-dasharray="3 3"
+							pointer-events="all" />
+					</g>
+				</svg>
+
+				<aside class="notes">
+					Now to talk at a high level about garbage collection, a common strategy used by browsers is mark and sweep.
+					* It starts at the root objects, such as window.
+					* And finds all objects directly linked to it.
+					* Then it finds all objects directly linked to the new objects it just found, until it reaches the end of the object tree.
+					* Now it starts at the next root object.
+					* and
+					* works its way through the object tree.
+					* Now it has everything linked with root objects marked
+					* it can delete all non-marked objects during the sweep cycle.
+					That is how mark and sweep performes garbage collection.
+				</aside>
+			</section>
+			<section data-state="dark-light-h" data-auto-animate>
+				<h2>Clearing object linking</h2>
+				<pre class="javascript"><code data-trim data-noescape>
+						var foo;
+						foo = document.querySelector('DIV');
+						<span class="fragment" data-fragment-index="1">foo = null;</span>
+					</code></pre>
+				<div class="light-section shadow-top">
+					<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="601px"
+						height="121px" viewBox="-0.5 -0.5 601 121">
+						<defs />
+						<g>
+							<ellipse cx="60" cy="60" rx="60" ry="60" fill="#ffffff" stroke="#000000" pointer-events="all" />
+							<g transform="translate(-0.5 -0.5)">
+								<switch>
+									<text x="60" y="67" fill="#000000" font-family="Helvetica" font-size="22px"
+										text-anchor="middle">window</text>
+								</switch>
+							</g>
+							<g>
+								<path d="M 120 60 L 233.63 60" fill="none" stroke="#000000" stroke-miterlimit="20"
+									pointer-events="stroke" stroke-width="6" />
+								<path d="M 232.88 60 L 225.88 63.5 L 227.63 60 L 225.88 56.5 Z" fill="#000000" stroke="#000000"
+									stroke-miterlimit="10" pointer-events="all" stroke-width="6" />
+								<ellipse cx="300" cy="60" rx="60" ry="60" fill="#ffffff" stroke="#000000" pointer-events="all" />
+								<g transform="translate(-0.5 -0.5)">
+									<switch>
+										<text x="300" y="67" fill="#000000" font-family="Helvetica" font-size="22px"
+											text-anchor="middle">foo</text>
+									</switch>
+								</g>
+							</g>
+							<g>
+								<path d="M 360 60 L 473.63 60" fill="none" stroke="#000000" stroke-miterlimit="10"
+									pointer-events="stroke" stroke-width="6"  class="fragment fade-out" data-fragment-index="1" />
+								<path d="M 472.88 60 L 465.88 63.5 L 467.63 60 L 465.88 56.5 Z" fill="#000000" stroke="#000000"
+									stroke-miterlimit="10" pointer-events="all" stroke-width="6"  class="fragment fade-out" data-fragment-index="1" />
+								<ellipse cx="540" cy="60" rx="60" ry="60" fill="#ffffff" stroke="#000000" pointer-events="all" />
+								<g transform="translate(-0.5 -0.5)">
+									<switch>
+										<text x="540" y="67" fill="#000000" font-family="Helvetica" font-size="22px"
+											text-anchor="middle">DIV
+											(node)</text>
+									</switch>
+								</g>
+							</g>
+						</g>
+					</svg>
+				</div>
+				<aside class="notes">
+					Back to our earlier code example and object tree. If we want the DIV to be deleted from memory, we just need to sever its link with a root object.
+					* We can do this by assigning null to foo. Now there is no link from the DIV object back to our root, window. DIV object will get cleaned up in a future sweep cycle.
+				</aside>
+			</section>
+			<section>
+				<h2>Example 1</h2>
+				<p>mem-leak-example-1.html</p>
+				<p><a href="https://github.com/sacah/mem-leaks">github.com/sacah/mem-leaks</a></p>
+				<pre class="javascript"><code data-trim data-noescape data-line-numbers="3,12|4,9|5|6|7,1|8,3|12,13">
+					var divList = [];
+
+					function loadPage(container) {
+						for (let a=0; a < 10000; a++) {
+							const el = document.createElement('DIV');
+							el.textContent = a;
+							divList.push(el);
+							container.appendChild(el);
+						}
+					}
+			
+					function unloadPage(container) {
+						container.innerHTML = '';
+					}
+				</code></pre>
+
+				<aside class="notes">
+					Lets take a look at the code of mem-leak-example-1.html on Github, (switch tabs), see the HTML structure, we have 2 buttons, load and unload. And a DIV with the id of container. (swtich back to slides) Now lets go over the JS, we have a loadPage and unloadPage functions, these are mapped to the load and unload buttons. And when called, it passes in a reference to the DIV with the id of container.
+					* We loop 10,000 times
+					* Create a new DIV node, assigned to el
+					* Set the text of that DIV to the index of our loop
+					* Add the DIV node to our divList array
+					* And append the DIV node to our container DIV on the page.
+					* unloadPage simply justs clears all the DIVs from our container DIV, so they don't appear on the page anymore.
+				</aside>
+			</section>
+			<section>
+				<h2>Example 1 - Detecting memory leaks</h2>
+				<img src="example1-mem-leak.png" /><img src="cancel.png" class="over-image" width="64" />
+				<img src="example1-no-mem-leak.png" /><img src="check-mark.png" class="over-image" width="64" />
+
+				<aside class="notes">
+					If we open the Performance Monitor open in DevTools, and run example 1, repeatedly clicking on Load and Unload buttons, we will see graphs like the one on the left. Both the memory usage and DOM nodes size goes higher and higher, everytime we click Load again, it's another step in the DOM Nodes graph, and due to how memory is managed, it's not a straight forward representation on the memory graph, but the fact the memory keeps climbing, and isn't getting cleared is our warning sign. If our example didn't have a memory leak, the graphs on the right is what we should see, sure there are similar stages where the graphs step up higher and higher, but then we see the browser did a garbage collection and the graph goes down again. And at the end when we stopped clicking the buttons and let the browser fully garbage collect, both DOM Nodes and memory went back to the level they were when we started.
+				</aside>
+			</section>
+			<section>
+				<h2>Example 1 - Finding memory leak</h2>
+				<p>(demo time)</p>
+
+				<aside class="notes">
+					Go to mem-leak-example-1.html tab
+					* open Memory tab in DevTools
+					* take a few JS Heap snapshots to let mem settle
+					* Then Performance Monitor tab, check 'JS Heap' & 'DOM Nodes'
+					* Click Load & Unload 7 times
+					* Show graphs going up
+					* Go to Memory tab, force GC
+					* Take snapshots until usage settles, delete all but last one.
+					* Compare last snapshot to first, sort by Deltas.
+					* Expand Detached HTMLDivElement, which has +9 999 delta
+					* We see that this detached HTMLDivElement is referenced by item number 9999 in an Array, next line down, the array is referenced by a variable called divList.
+				</aside>
+			</section>
+			<section>
+				<h2>Example 1 - Quiz</h2>
+				<p>What could we add to unloadPage to fix this leak?</p>
+				<ol>
+					<li>container.parentElement.removeChild(container);</li>
+					<li>divList = [];</li>
+					<li>delete(divList);</li>
+				</ol>
+
+				<aside class="notes">
+					1 - just removes more things from the DOM tree, doesn't clear the link
+					2 - clears the references from divList to the DOM nodes
+					3 - returns false, can't delete things defined in global space
+				</aside>
+			</section>
+			<section>
+				<h2>Example 2</h2>
+				<p>mem-leak-example-2.html</p>
+				<p><a href="https://github.com/sacah/mem-leaks">github.com/sacah/mem-leaks</a></p>
+				<pre class="javascript"><code data-trim data-noescape data-line-numbers="2|4|5-6|1,8-10|12-13|15">
+					var log;
+					function loadPage(container) {
+						let lastEl;
+						for (let a=0; a < 50; a++) {
+							const el = document.createElement('DIV');
+							el.textContent = a;
+			
+							log = function () {
+								console.log(a, el);
+							}
+			
+							if (!a) container.appendChild(el);
+							else lastEl.appendChild(el);
+			
+							lastEl = el;
+						}
+					}
+				</code></pre>
+
+				<aside class="notes">
+					Now we will look at mem-leak-example-2.html. The HTML is the same as our first example, a Load and Unload buttons, except we've changed the loadPage function.
+					* This time we only loop 50 times
+					* We create a DIV and set its text to the loop index
+					* Here we create a log function that console.logs our loop index and the DIV node 
+					* Then we check if A is 0, and we append the DIV to the container DIV, else we append the DIV to lastEl
+					* And finally we set lastEl to the current DIV we just inserted. 
+				</aside>
+			</section>
+			<section>
+				<h2>Example 2 - Finding memory leak</h2>
+				<p>(demo time)</p>
+
+				<aside class="notes">
+					Lets take a look this example in devtools.
+					(Go to Example 2 tab)
+
+					We're already setup with the Performance monitor and Memory tab open.
+					The memory has settles, so lets take a snapshot.
+					I'll click Load once, and inspect the DIV to show you the structure. (Expand a few divs down)
+					You can see it's a bunch of nested DIVs.
+
+					I'll click Unload, then Load and Unload another 6 times again, watching the graphs below as we do.
+					Switching back to the Memory tab, and clicking on Profile to see the memory usage, we can see it's stable, so we will take another snapshot.
+					Notice how the DOM nodes graph looks like a stair case, then had a sudden drop down, to what looks like 1 stair above our starting position. This is a clue, lets compare Snapshot 2 to Snapshot 1 to look further.
+
+					Sort by Deltas, and scroll down a bit we see Detached HTMLDivElements again, and there are +50 of these, so even though we did it 7 times, it's only kept 1 loops worth of Div elements linked, which is what we saw in the DOM nodes graph too.
+
+					Expanding Detached HTMLDivElement, and clicking on the first item.
+					In Retainers we can see it's referenced by a Detached HTMLDivElement, and that is referenced by another Detached HTMLDivElement and so on, we follow this down till we hit the Context, a function called log, which is referenced from the Window object.
+
+					In the first example, the DOM tree was very flat, so right up the top you saw a detached div element being referenced by an array, and we had to loop 10,000 times and store each one to make a noticable memory leak. In this example, we're replacing the log function each loop, so it's actually just the last DIV element that is being referenced, but because of the DOM structure, that last DIV element has a parent that must also be retained, and so on up the tree to the very first DIV element we created. This is a more real world example, as our HTML pages tend to be complex with elements nested many levels deep.
+				</aside>
+			</section>
+			<section>
+				<h2>Example 3 - Challenge</h2>
+				<p>mem-leak-example-3.html</p>
+				<p><a href="https://github.com/sacah/mem-leaks">github.com/sacah/mem-leaks</a></p>
+				<p>Simple ToDo app with a memory leak, try and find/fix the leak.</p>
+				<p>&nbsp;</p>
+				<p class="fragment fade-up alert">Slides beyond this point show you how to solve this challenge.</p>
+			</section>
+			<section>
+				<h2>Example 3 - Finding memory leak</h2>
+				<p>(demo time)</p>
+			</section>
+			<section>
+				<h2>Example 3 - Memory snapshot</h2>
+				<img src="example3-detached-button-trace.png" />
+				<pre class="javascript"><code data-trim data-noescape data-line-numbers="49|33,36|43,45|1,7|15,19">
+					class Task {
+						constructor(title) {
+							this.title = title;
+							this.isDone = false;
+						}
+						render() {
+							this.element = document.createElement('li');
+							this.element.innerText = this.title;
+							this.element.className = this.isDone && 'done';
+			
+							this.checkbox = document.createElement('input');
+							this.checkbox.type = 'checkbox';
+							this.checkbox.onchange = this.toggle.bind(this);
+							this.element.prepend(this.checkbox);
+							this.deleteButton = document.createElement('button');
+							this.deleteButton.type = 'button';
+							this.deleteButton.innerText = 'delete';
+							this.deleteButton.onclick = this.destroy.bind(this);
+							this.element.append(this.deleteButton);
+							this.checkbox = null;
+							this.deleteButton = null;
+							return this.element;
+						}
+						toggle() {
+							this.isDone = !this.isDone;
+							this.element.className = this.isDone && 'done';
+						}
+						destroy() {
+							this.element.remove();
+						}
+					}
+			
+					class List {
+						constructor(container) {
+							this.container = container;
+							this.tasks = [];
+						}
+						render() {
+							this.element = document.createElement('ul');
+							this.container.append(this.element);
+						}
+						add(title) {
+							const task = new Task(title);
+							this.element.append(task.render());
+							this.tasks.push(task);
+						}
+					}
+			
+					const list = new List(document.getElementById('todo'));
+					document.getElementById('form').onsubmit = (event) => {
+						const el = document.getElementById('task');
+						list.add(el.value);
+						el.value = '';
+						el.focus();
+						event.preventDefault();
+					};
+					list.render();
+				</code></pre>
+
+				<aside class="notes">
+
+				</aside>
+			</section>
+			<section>
+				<h2>Example 3 - Simple fix?</h2>
+				<img src="example3-detached-button-trace.png" />
+				<pre class="javascript"><code data-trim data-noescape>
+					class Task {
+						constructor(title) {
+						}
+						render() {
+							this.element = document.createElement('li');
+							...
+						}
+						toggle() {
+						}
+						destroy() {
+							this.element.remove();
+							<span class="fragment">this.element = null;</span>
+						}
+					}
+				</code></pre>
+
+				<aside class="notes">
+
+				</aside>
+			</section>
+			<section>
+				<h2>Example 3 - Not so simple</h2>
+				<img src="example3-simple-fix-memory.png" />
+				<div>&nbsp;</div>
+				<img src="Example3-simple-fix-retainers.png" />
+			</section>
+			<section>
+				<h2>Example 3 - Root cause fix</h2>
+				<pre class="javascript"><code data-trim data-noescape>
+					class Task {
+						constructor(title, <span class="fragment" data-fragment-index="1">onDestroy</span>) {
+							this.title = title;
+							this.isDone = false;
+							<span class="fragment" data-fragment-index="2">this.referenceObject;</span>
+							<span class="fragment" data-fragment-index="3">this.onDestroy = onDestroy;</span>
+						}
+						render() { ... }
+						toggle() { ... }
+						destroy() {
+							this.element.remove();
+							<span class="fragment" data-fragment-index="4">this.onDestroy(this.referenceObject);</span>
+						}
+					}
+			
+					class List {
+						constructor(container) { ... }
+						render() { ... }
+						add(title) {
+							const task = new Task(title<span class="fragment" data-fragment-index="5">, this.destroy.bind(this)</span>);
+							<span class="fragment" data-fragment-index="6">task.referenceObject = task;</span>
+							this.element.append(task.render());
+							this.tasks.push(task);
+						}
+
+						<span class="fragment" data-fragment-index="7">destroy(referenceObject) {</span>
+							<span class="fragment" data-fragment-index="7">this.tasks.splice(this.tasks.indexOf(referenceObject), 1);</span>
+						<span class="fragment" data-fragment-index="7">}</span>
+					}
+			
+					const list = new List(document.getElementById('todo'));
+					document.getElementById('form').onsubmit = (event) => {
+						const el = document.getElementById('task');
+						list.add(el.value);
+						el.value = '';
+						el.focus();
+						event.preventDefault();
+					};
+					list.render();
+				</code></pre>
+
+				<aside class="notes">
+
+				</aside>
+			</section>
+			<section>
+				<h2>Go forth and find memory leaks</h2>
+				Thank you for watching, I hope it has been useful.
+			</section>
+
+			<section>
+				<h2>Credits</h2>
+				<p>Icons made by <a href="https://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></p>
+			</section>
+		</div>
+	</div>
+
+	<script src="/dist/reveal.js"></script>
+	<script src="/plugin/notes/notes.js"></script>
+	<script src="/plugin/markdown/markdown.js"></script>
+	<script src="/plugin/highlight/highlight.js"></script>
+	<script>
+		// More info about initialization & config:
+		// - https://revealjs.com/initialization/
+		// - https://revealjs.com/config/
+		Reveal.initialize({
+			hash: true,
+			width: '100%',
+
+			// Learn about plugins: https://revealjs.com/plugins/
+			plugins: [RevealMarkdown, RevealHighlight, RevealNotes]
+		});
+	</script>
+</body>
+
+</html>
